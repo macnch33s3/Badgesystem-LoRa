@@ -9,6 +9,8 @@ Used devices
 
 Ressources
 
-https://github.com/PiSupply/IoTLoRaRange
+<https://github.com/PiSupply/IoTLoRaRange>
 
 The IoT micro:bit LoRa Node uses the RAKWireless RAK811 LoRa node module which is based on Semtech SX1276 LoRa technology.
+
+Code lang used for this Project is tbdf.
