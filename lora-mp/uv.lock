@@ -1,0 +1,20 @@
+version = 1
+revision = 3
+requires-python = ">=3.12"
+
+[[package]]
+name = "lora-mp"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "uflash" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "uflash", specifier = ">=2.0.0" }]
+
+[[package]]
+name = "uflash"
+version = "2.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/94/6d/423d6358a1a65353cf54ff5c613a16add54c45fb5e16daa022e0650532c5/uflash-2.0.0.tar.gz", hash = "sha256:f583d2264fcf37e3e358f1f3a4370ce43b24eb3fdf845a477202555235b52582", size = 756369, upload-time = "2021-06-21T15:47:46.43Z" }
