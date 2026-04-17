@@ -6,4 +6,5 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "uflash>=2.0.0",
+    "pyserial>=3.5",
 ]
