@@ -1,4 +1,4 @@
-# micro:bit MicroPython — LoRa P2P transmitter
+# micro:bit MicroPython — LoRaWAN ABP transmitter
 # Flash this file to the micro:bit using:
 #   uv run uflash microbit_node.py
 #
@@ -6,16 +6,19 @@
 #   micro:bit pin0 (TX) -> RAK811 RX
 #   micro:bit pin1 (RX) -> RAK811 TX
 #   3.3V / GND via edge connector
+#
+# ABP credentials: TTN Console -> your device -> Activation -> ABP
 
-from microbit import display, Image, button_a, button_b, sleep
+from microbit import display, Image, button_a, sleep
 import uart as serial
 
 BADGE_ID = "BADGE_01"
-TX_INTERVAL_MS = 5000  # send every 5 seconds
+TX_INTERVAL_MS = 30000  # TTN fair use: ~1 packet/30s
 
-# P2P config must match Raspberry Pi side:
-# 868.0 MHz, SF7, BW125, CR4/5, preamble 8, TX power 20
-LORA_CONFIG = "at+set_config=lorap2p:868000000:7:0:1:8:20"
+# From TTN console (ABP activation)
+DEV_ADDR = "260BAAFD"
+NWK_S_KEY = "AD2995B461E158F506027728E79A77DE"
+APP_S_KEY = "81E4AAA8D77D370EDE614C5801AFA2BD"
 
 
 def send_at(cmd, wait_ms=500):
@@ -27,15 +30,30 @@ def send_at(cmd, wait_ms=500):
     return resp.decode("utf-8", "ignore").strip()
 
 
-def init_rak811():
+def init_lorawan_abp():
     display.show(Image.CLOCK12)
 
     send_at("at+set_config=device:restart", wait_ms=2000)
-    send_at("at+set_config=lora:work_mode:1")   # P2P mode
-    send_at(LORA_CONFIG)
 
-    # TX mode
-    send_at("at+set_config=lorap2p:transfer_mode:2", wait_ms=300)
+    # LoRaWAN mode
+    send_at("at+set_config=lora:work_mode:0")
+
+    # Region
+    send_at("at+set_config=lora:region:EU868")
+
+    # ABP credentials
+    send_at("at+set_config=lora:dev_addr:" + DEV_ADDR)
+    send_at("at+set_config=lora:nwks_key:" + NWK_S_KEY)
+    send_at("at+set_config=lora:apps_key:" + APP_S_KEY)
+
+    # ABP does not require join — confirm mode off, ADR off
+    send_at("at+set_config=lora:join_mode:1")   # 1 = ABP
+    send_at("at+set_config=lora:confirm:0")      # unconfirmed uplinks
+    send_at("at+set_config=lora:adr:0")          # fixed data rate
+
+    # Frame counter reset (needed after reflash in ABP)
+    send_at("at+set_config=lora:countUp:0")
+    send_at("at+set_config=lora:countDown:0")
 
     display.show(Image.YES)
     sleep(500)
@@ -44,33 +62,32 @@ def init_rak811():
 
 def send_payload(payload: str):
     hex_data = payload.encode().hex()
-    resp = send_at("at+send=lorap2p:" + hex_data)
-    return resp
+    # port 1, unconfirmed uplink
+    return send_at("at+send=lora:1:" + hex_data, wait_ms=3000)
 
 
 def main():
     serial.init(baudrate=115200, tx=pin0, rx=pin1)
     sleep(500)
 
-    init_rak811()
+    init_lorawan_abp()
 
     counter = 0
     while True:
-        # Button A: send immediately
-        # Button B: change badge ID (placeholder)
         if button_a.was_pressed():
             msg = "{}:{}:BTN".format(BADGE_ID, counter)
-            resp = send_payload(msg)
+            send_payload(msg)
             display.show(Image.ARROW_N)
-            sleep(200)
+            sleep(300)
             display.clear()
 
-        # Periodic heartbeat
         msg = "{}:{}:HB".format(BADGE_ID, counter)
         send_payload(msg)
-        counter += 1
+        display.show(Image.ARROW_N)
+        sleep(300)
+        display.clear()
 
-        display.show(str(counter % 10))
+        counter += 1
         sleep(TX_INTERVAL_MS)
 
 
