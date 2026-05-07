@@ -1,0 +1,14 @@
+{
+    "name": "badgesystem-lora-node",
+    "description": "Badge system LoRa node — RAK811 ABP uplink to TTN",
+    "dependencies": {
+        "core": "*"
+    },
+    "files": [
+        "main.ts"
+    ],
+    "supportedTargets": [
+        "microbit"
+    ],
+    "preferredEditor": "tsprj"
+}
