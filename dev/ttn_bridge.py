@@ -13,16 +13,15 @@ import paho.mqtt.client as mqtt
 # Configure app ID and dev
 TTN_APP_ID      = "microbit-node"               # application ID from TTN Console (not the display name)
 TTN_API_KEY     = "NNSXS.C6C5H3NUTURSGK5JUOSA6WDWKYRSRS3AG25X7YA.IB73CYYGEIVWE76UGZ4D2RTUOEO4LYKDCH73IF5UXCTDIJTYUGRQ"
-SENDER_DEV_ID   = "eui-70b3d57ed0077401"  # lowercase + eui- prefix
-DISPLAY_DEV_ID  = "euid-70b3d57ed00775f5"  # lowercase + eui- prefix
+SENDER_DEV_ID   = "eui-70b3d57ed0077401"
+DISPLAY_DEV_ID  = "euid-70b3d57ed00775f5"
 TTN_HOST        = "eu1.cloud.thethings.network"
 TTN_PORT        = 8883
 
 
-
+#Uplink and downlink topic
 UPLINK_TOPIC   = f"v3/{TTN_APP_ID}@ttn/devices/{SENDER_DEV_ID}/up"
 DOWNLINK_TOPIC = f"v3/{TTN_APP_ID}@ttn/devices/{DISPLAY_DEV_ID}/down/push"
-
 
 def decode_cayenne_temp(payload_bytes: bytes) -> float | None:
     """Parse Cayenne LPP: 01 67 <Int16BE temp*10> → degrees Celsius."""
