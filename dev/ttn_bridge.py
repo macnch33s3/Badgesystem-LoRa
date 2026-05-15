@@ -8,6 +8,7 @@ Fill in the four constants below, then run:  python3 dev/ttn_bridge.py
 import json
 import struct
 import base64
+from datetime import datetime
 import paho.mqtt.client as mqtt
 
 # Configure app ID and dev
@@ -23,6 +24,10 @@ TTN_PORT        = 8883
 UPLINK_TOPIC   = f"v3/{TTN_APP_ID}@ttn/devices/{SENDER_DEV_ID}/up"
 DOWNLINK_TOPIC = f"v3/{TTN_APP_ID}@ttn/devices/{DISPLAY_DEV_ID}/down/push"
 
+def ts() -> str:
+    return datetime.now().strftime("%H:%M:%S")
+
+
 def decode_cayenne_temp(payload_bytes: bytes) -> float | None:
     """Parse Cayenne LPP: 01 67 <Int16BE temp*10> → degrees Celsius."""
     if len(payload_bytes) >= 4 and payload_bytes[0] == 0x01 and payload_bytes[1] == 0x67:
@@ -33,10 +38,10 @@ def decode_cayenne_temp(payload_bytes: bytes) -> float | None:
 
 def on_connect(client, userdata, flags, rc, props=None):
     if rc == 0:
-        print(f"Connected to TTN MQTT — subscribing to {UPLINK_TOPIC}")
+        print(f"[{ts()}] Connected to TTN MQTT — subscribing to {UPLINK_TOPIC}")
         client.subscribe(UPLINK_TOPIC)
     else:
-        print(f"Connection failed, rc={rc}")
+        print(f"[{ts()}] Connection failed, rc={rc}")
 
 
 def on_message(client, userdata, msg):
@@ -45,15 +50,15 @@ def on_message(client, userdata, msg):
         b64  = data["uplink_message"]["frm_payload"]
         raw  = base64.b64decode(b64)
     except (KeyError, ValueError) as e:
-        print(f"Could not parse uplink: {e}")
+        print(f"[{ts()}] Could not parse uplink: {e}")
         return
 
     temp = decode_cayenne_temp(raw)
     if temp is None:
-        print(f"Uplink received but not a Cayenne temp payload: {raw.hex()}")
+        print(f"[{ts()}] Uplink received but not a Cayenne temp payload: {raw.hex()}")
         return
 
-    print(f"Temperature from sender: {temp:.1f} °C — scheduling downlink")
+    print(f"[{ts()}] Temperature from sender: {temp:.1f} °C — scheduling downlink")
 
     # Encode as 2-byte signed Int16BE (temp * 10) for the display node
     tenths   = round(temp * 10)
@@ -66,7 +71,7 @@ def on_message(client, userdata, msg):
         }]
     }
     client.publish(DOWNLINK_TOPIC, json.dumps(downlink))
-    print(f"Downlink queued: {payload.hex()} → display node")
+    print(f"[{ts()}] Downlink queued: {payload.hex()} → display node")
 
 
 def main():
@@ -76,7 +81,7 @@ def main():
     client.on_connect = on_connect
     client.on_message = on_message
 
-    print(f"Connecting to {TTN_HOST}:{TTN_PORT} ...")
+    print(f"[{ts()}] Connecting to {TTN_HOST}:{TTN_PORT} ...")
     client.connect(TTN_HOST, TTN_PORT)
     client.loop_forever()
 
